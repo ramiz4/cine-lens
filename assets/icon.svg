@@ -1,0 +1,24 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="iconGradient" x1="0" y1="0" x2="100" y2="100">
+      <stop offset="0%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+  </defs>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M50 0C22.3858 0 0 22.3858 0 50C0 77.6142 22.3858 100 50 100C77.6142 100 100 77.6142 100 50C100 22.3858 77.6142 0 50 0ZM50 10C27.9086 10 10 27.9086 10 50C10 72.0914 27.9086 90 50 90C72.0914 90 90 72.0914 90 50C90 27.9086 72.0914 10 50 10ZM50 30C38.9543 30 30 38.9543 30 50C30 61.0457 38.9543 70 50 70C61.0457 70 70 61.0457 70 50C70 38.9543 61.0457 30 50 30ZM50 38L62.9904 44L62.9904 56L50 62L37.0096 56L37.0096 44L50 38Z" fill="url(#iconGradient)"/>
+  <path d="M24 16H16V24L24 24V16Z" fill="url(#iconGradient)"/>
+  <path d="M42 12H34V20L42 20V12Z" fill="url(#iconGradient)"/>
+  <path d="M62 12H54V20H62V12Z" fill="url(#iconGradient)"/>
+  <path d="M80 16H72V24H80V16Z" fill="url(#iconGradient)"/>
+  <path d="M84 24H76V32H84V24Z" fill="url(#iconGradient)"/>
+  <path d="M88 42H80V50H88V42Z" fill="url(#iconGradient)"/>
+  <path d="M88 62H80V70H88V62Z" fill="url(#iconGradient)"/>
+  <path d="M84 76H76V84H84V76Z" fill="url(#iconGradient)"/>
+  <path d="M80 80H72V88H80V80Z" fill="url(#iconGradient)"/>
+  <path d="M62 88H54V80H62V88Z" fill="url(#iconGradient)"/>
+  <path d="M42 88H34V80H42V88Z" fill="url(#iconGradient)"/>
+  <path d="M24 84H16V76L24 76V84Z" fill="url(#iconGradient)"/>
+  <path d="M20 72H12V64H20V72Z" fill="url(#iconGradient)"/>
+  <path d="M12 58H20V50H12V58Z" fill="url(#iconGradient)"/>
+  <path d="M12 38H20V30H12V38Z" fill="url(#iconGradient)"/>
+</svg>

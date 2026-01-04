@@ -1,0 +1,7 @@
+{
+  "name": "CineLens",
+  "description": "Point your camera at a movie scene, and CineLens will magically identify its title.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
