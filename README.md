@@ -70,7 +70,7 @@ Follow these instructions to set up the project locally.
     Add your Gemini API key to the file:
 
     ```env
-    GEMINI_API_KEY=your_actual_api_key_here
+    VITE_API_KEY=your_actual_api_key_here
     ```
 
 4.  **Run the Application**

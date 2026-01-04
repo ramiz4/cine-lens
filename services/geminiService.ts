@@ -1,8 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 
-const API_KEY = process.env.API_KEY;
+const API_KEY = import.meta.env.VITE_API_KEY;
 if (!API_KEY) {
-  throw new Error("API_KEY environment variable not set");
+  throw new Error("VITE_API_KEY environment variable not set");
 }
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
@@ -28,13 +28,13 @@ export async function identifyMovieFromFrames(base64Frames: string[], previousGu
       data: frame,
     },
   }));
-  
+
   try {
     const response = await ai.models.generateContent({
       model: model,
       contents: { parts: [textPart, ...imageParts] },
     });
-    
+
     const resultText = response.text.trim();
     if (!resultText) {
       // Treat an empty response as an inability to identify.
@@ -86,7 +86,7 @@ If no streaming platforms are found, provide an empty array for "streamingPlatfo
       model: model,
       contents: prompt,
       config: {
-        tools: [{googleSearch: {}}],
+        tools: [{ googleSearch: {} }],
         // Disabling the thinking budget can improve latency for requests
         // where the model can respond without extensive reasoning.
         thinkingConfig: { thinkingBudget: 0 },
@@ -98,33 +98,33 @@ If no streaming platforms are found, provide an empty array for "streamingPlatfo
     if (jsonString.startsWith('```json')) {
       jsonString = jsonString.substring(7, jsonString.length - 3).trim();
     } else if (jsonString.startsWith('```')) {
-        jsonString = jsonString.substring(3, jsonString.length - 3).trim();
+      jsonString = jsonString.substring(3, jsonString.length - 3).trim();
     }
-    
+
     const parsedData = JSON.parse(jsonString);
 
     if (parsedData.movieInfoUrl === undefined || !Array.isArray(parsedData.streamingPlatforms) || parsedData.posterUrl === undefined) {
       throw new Error("AI returned data in an unexpected format.");
     }
-    
+
     // Sort platforms to prioritize "Free"
     parsedData.streamingPlatforms.sort((a: any, b: any) => {
-        if (a.type === 'Free' && b.type !== 'Free') return -1;
-        if (a.type !== 'Free' && b.type === 'Free') return 1;
-        if (a.type === 'Subscription' && b.type === 'Rent/Buy') return -1;
-        if (a.type === 'Rent/Buy' && b.type === 'Subscription') return 1;
-        return 0;
+      if (a.type === 'Free' && b.type !== 'Free') return -1;
+      if (a.type !== 'Free' && b.type === 'Free') return 1;
+      if (a.type === 'Subscription' && b.type === 'Rent/Buy') return -1;
+      if (a.type === 'Rent/Buy' && b.type === 'Subscription') return 1;
+      return 0;
     });
 
-    return { 
+    return {
       movieInfoUrl: parsedData.movieInfoUrl,
-      posterUrl: parsedData.posterUrl, 
-      streamingPlatforms: parsedData.streamingPlatforms 
+      posterUrl: parsedData.posterUrl,
+      streamingPlatforms: parsedData.streamingPlatforms
     };
   } catch (error) {
     console.error("Error calling Gemini API for search or parsing response:", error);
     if (error instanceof SyntaxError) {
-        throw new Error("The AI returned movie details in an invalid format. Please try again.");
+      throw new Error("The AI returned movie details in an invalid format. Please try again.");
     }
     throw new Error("The AI failed to search for movie details. Please try again.");
   }
