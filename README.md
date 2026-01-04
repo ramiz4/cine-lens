@@ -41,6 +41,7 @@ Follow these instructions to set up the project locally.
 ### Prerequisites
 
 - **Node.js**: Version 18 or higher.
+- **pnpm**: Fast, disk space efficient package manager. Install it globally with `npm install -g pnpm`.
 - **Gemini API Key**: Get a free API key from [Google AI Studio](https://aistudio.google.com/).
 
 ### Installation
@@ -55,7 +56,7 @@ Follow these instructions to set up the project locally.
 2.  **Install Dependencies**
 
     ```bash
-    npm install
+    pnpm install
     ```
 
 3.  **Configure Environment**
@@ -77,7 +78,7 @@ Follow these instructions to set up the project locally.
     Start the development server:
 
     ```bash
-    npm run dev
+    pnpm dev
     ```
 
     Open your browser and navigate to `http://localhost:3000`.
