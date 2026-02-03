@@ -21,6 +21,7 @@ Beyond simple identification, CineLens acts as your personal movie assistant, fe
 
 - **🎥 In-App Video Recorder**: Seamlessly record video clips directly from your browser.
 - **🧠 Advanced AI Vision**: Powered by Gemini 1.5 Flash for high-fidelity video frame analysis.
+- **🔒 Privacy-First Local AI**: Optional on-device AI processing using transformers.js - no API key required, completely private.
 - **🔄 Smart Context Loop**: Validates guesses with you. If the AI is wrong, it learns from the mistake and tries again with added context.
 - **📺 Streaming Discovery**: Instantly find where to watch the identified movie, with a focus on free services (Tubi, Pluto TV, etc.).
 - **⚡ Modern & Fast**: Built with React 19 and Vite for a lightning-fast experience.
@@ -31,7 +32,9 @@ Beyond simple identification, CineLens acts as your personal movie assistant, fe
 - **Frontend Framework**: [React 19](https://react.dev/)
 - **Build Tool**: [Vite](https://vitejs.dev/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **AI Integration**: [Google GenAI SDK](https://www.npmjs.com/package/@google/genai) (Gemini 1.5 Flash)
+- **AI Integration**: 
+  - [Google GenAI SDK](https://www.npmjs.com/package/@google/genai) (Gemini 1.5 Flash)
+  - [Transformers.js](https://huggingface.co/docs/transformers.js) (Local browser-based AI)
 - **Language**: TypeScript
 
 ## 🚀 Getting Started
@@ -42,7 +45,7 @@ Follow these instructions to set up the project locally.
 
 - **Node.js**: Version 18 or higher.
 - **pnpm**: Fast, disk space efficient package manager. Install it globally with `npm install -g pnpm`.
-- **Gemini API Key**: Get a free API key from [Google AI Studio](https://aistudio.google.com/).
+- **Gemini API Key** (Optional): Get a free API key from [Google AI Studio](https://aistudio.google.com/) if you want to use Gemini AI. You can also use the local AI mode without an API key.
 
 ### Installation
 
@@ -59,9 +62,9 @@ Follow these instructions to set up the project locally.
     pnpm install
     ```
 
-3.  **Configure Environment**
+3.  **Configure Environment (Optional for Gemini API)**
 
-    Create a `.env` file in the root directory.
+    To use Gemini API, create a `.env` file in the root directory.
 
     ```bash
     touch .env
@@ -72,6 +75,8 @@ Follow these instructions to set up the project locally.
     ```env
     VITE_API_KEY=your_actual_api_key_here
     ```
+    
+    **Note**: You can skip this step if you plan to use the local AI mode only.
 
 4.  **Run the Application**
 
@@ -82,6 +87,23 @@ Follow these instructions to set up the project locally.
     ```
 
     Open your browser and navigate to `http://localhost:3000`.
+
+## 🤖 AI Modes
+
+CineLens offers two AI modes that you can switch between using the toggle in the header:
+
+### Gemini API Mode (Default)
+- **Pros**: Most accurate results, fast inference, excellent at identifying movies
+- **Cons**: Requires API key, sends data to Google servers, requires internet connection
+- **Best for**: Users who want the best accuracy and have a Gemini API key
+
+### Local AI Mode
+- **Pros**: Complete privacy (runs entirely in your browser), no API key needed, no internet required after model download
+- **Cons**: Lower accuracy, requires modern browser with WebGPU support for best performance, initial model download (~360MB)
+- **Best for**: Privacy-conscious users, offline usage, or testing without an API key
+- **Browser Support**: Best in Chrome/Edge with WebGPU. Falls back to WebAssembly in other browsers.
+
+To switch modes, simply click the toggle switch in the header. The first time you enable Local AI mode, the model will download and initialize (this may take 1-2 minutes).
 
 ## 📁 Project Structure
 

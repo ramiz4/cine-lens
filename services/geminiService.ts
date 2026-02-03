@@ -1,13 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
 
 const API_KEY = import.meta.env.VITE_API_KEY;
-if (!API_KEY) {
-  throw new Error("VITE_API_KEY environment variable not set");
-}
 
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+// Initialize AI only if API key is available
+const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 export async function identifyMovieFromFrames(base64Frames: string[], previousGuesses: string[] = []): Promise<string> {
+  if (!ai) {
+    throw new Error("Gemini API key not configured. Please use Local AI mode or set VITE_API_KEY.");
+  }
+  
   if (base64Frames.length === 0) {
     throw new Error("No frames provided to identify the movie.");
   }
@@ -50,6 +52,10 @@ export async function identifyMovieFromFrames(base64Frames: string[], previousGu
 }
 
 export async function searchMovieInfo(movieTitle: string): Promise<{ movieInfoUrl: string | null; posterUrl: string | null; streamingPlatforms: { name: string; type: string; url: string; }[] }> {
+  if (!ai) {
+    throw new Error("Gemini API key not configured. Please use Local AI mode or set VITE_API_KEY.");
+  }
+  
   const model = 'gemini-2.5-flash';
   const prompt = `Your task is to act as a movie information finder. You MUST use Google Search grounding to find the following details for the movie: "${movieTitle}".
 
