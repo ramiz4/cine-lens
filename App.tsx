@@ -44,13 +44,19 @@ const App: React.FC = () => {
     const initLlm = async () => {
       if (useLocalLlm && !localLlmInitialized) {
         try {
-          setLoaderMessage('Initializing local LLM (this may take a moment)...');
+          setLoaderMessage('Initializing local AI models (downloading ~200MB, this may take 1-2 minutes)...');
           setStatus(AppStatus.PROCESSING);
-          await localLlmService.initializeLocalLlm();
+          
+          // Initialize both the vision model and text generation model
+          await Promise.all([
+            localLlmService.initializeImageToText(),
+            localLlmService.initializeLocalLlm()
+          ]);
+          
           setLocalLlmInitialized(true);
           setStatus(AppStatus.IDLE);
         } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : 'Failed to initialize local LLM';
+          const errorMessage = err instanceof Error ? err.message : 'Failed to initialize local AI';
           setError(errorMessage);
           setStatus(AppStatus.ERROR);
           setUseLocalLlm(false); // Fall back to API mode
@@ -242,12 +248,12 @@ const App: React.FC = () => {
           
           {useLocalLlm && !localLlmInitialized && status !== AppStatus.PROCESSING && (
             <p className="mt-2 text-xs text-yellow-400">
-              ⚠️ Local AI will initialize on first use (may take a minute)
+              ⚠️ Local AI will download models on first use (~200MB, 1-2 minutes)
             </p>
           )}
           {useLocalLlm && localLlmInitialized && (
             <p className="mt-2 text-xs text-green-400">
-              ✓ Local AI ready
+              ✓ Local AI ready (vision + text models loaded)
             </p>
           )}
         </header>

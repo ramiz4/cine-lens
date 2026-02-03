@@ -21,7 +21,7 @@ Beyond simple identification, CineLens acts as your personal movie assistant, fe
 
 - **🎥 In-App Video Recorder**: Seamlessly record video clips directly from your browser.
 - **🧠 Advanced AI Vision**: Powered by Gemini 1.5 Flash for high-fidelity video frame analysis.
-- **🔒 Local AI Integration (Experimental)**: Demonstrates browser-based AI using transformers.js - a proof of concept for privacy-first AI (currently text-only, vision capabilities coming in future).
+- **🔒 Local AI Mode**: Privacy-first on-device processing using transformers.js with vision capabilities - no API key required, completely private.
 - **🔄 Smart Context Loop**: Validates guesses with you. If the AI is wrong, it learns from the mistake and tries again with added context.
 - **📺 Streaming Discovery**: Instantly find where to watch the identified movie, with a focus on free services (Tubi, Pluto TV, etc.).
 - **⚡ Modern & Fast**: Built with React 19 and Vite for a lightning-fast experience.
@@ -34,7 +34,7 @@ Beyond simple identification, CineLens acts as your personal movie assistant, fe
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **AI Integration**: 
   - [Google GenAI SDK](https://www.npmjs.com/package/@google/genai) (Gemini 1.5 Flash) - Primary AI provider
-  - [Transformers.js](https://huggingface.co/docs/transformers.js) (Local browser-based AI) - Experimental integration for demonstration
+  - [Transformers.js](https://huggingface.co/docs/transformers.js) (Local browser-based AI with vision) - Privacy-first alternative
 - **Language**: TypeScript
 
 ## 🚀 Getting Started
@@ -93,21 +93,21 @@ Follow these instructions to set up the project locally.
 CineLens offers two AI modes that you can switch between using the toggle in the header:
 
 ### Gemini API Mode (Default - Recommended)
-- **Pros**: Most accurate results, fast inference, excellent at identifying movies, vision analysis of video frames
+- **Pros**: Most accurate results, fast inference, excellent at identifying movies, native vision analysis
 - **Cons**: Requires API key, sends data to Google servers, requires internet connection
 - **Best for**: Users who want the best accuracy and have a Gemini API key
 
-### Local AI Mode (Experimental - Limited)
-- **Pros**: Complete privacy (runs entirely in your browser), no API key needed
-- **Cons**: **Does not support vision analysis** - cannot identify movies from video frames (text-only LLM), no access to movie information/URLs/streaming data
-- **Status**: Included as a proof-of-concept for local browser-based AI. Vision-language models for browsers are still experimental and not yet practical for this use case.
-- **Note**: Currently, this mode will show an error when trying to identify movies, as it cannot process video frames. This demonstrates the integration of transformers.js but highlights the current limitations of browser-based vision AI.
+### Local AI Mode (Privacy-First)
+- **Pros**: Complete privacy (runs entirely in your browser), no API key needed, works offline after models are downloaded
+- **Cons**: Lower accuracy compared to Gemini, requires modern browser with WebGPU for best performance, initial model download (~200MB), slower inference
+- **How it works**: Uses image-to-text model (ViT-GPT2) to generate captions from video frames, then uses a text generation model (SmolLM2) to identify the movie from those captions
+- **Best for**: Privacy-conscious users, offline usage, or users without an API key
 - **Browser Support**: Best in Chrome/Edge with WebGPU. Falls back to WebAssembly in other browsers.
-- **Model Cache**: After first download (~360MB), the model is cached in browser storage (IndexedDB) for offline use.
+- **Model Cache**: After first download (~200MB total), models are cached in browser storage (IndexedDB) for offline use.
 
-**Important**: For actual movie identification, you must use Gemini API mode. Local AI mode is a demonstration of the transformers.js integration and will be more useful when vision-language models become available for browser use.
+**Note**: Local AI mode uses a two-step approach (vision → captions → identification) which may be less accurate than Gemini's direct vision analysis, but provides a fully private, no-API-key alternative.
 
-To switch modes, simply click the toggle switch in the header.
+To switch modes, simply click the toggle switch in the header. The first time you enable Local AI mode, the models will download and initialize (this may take 1-2 minutes).
 
 ## 📁 Project Structure
 
