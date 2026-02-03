@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { AppStatus } from './types';
 import VideoRecorder from './components/VideoRecorder';
 import ResultDisplay from './components/ResultDisplay';
@@ -29,6 +29,9 @@ const App: React.FC = () => {
   const [useLocalLlm, setUseLocalLlm] = useState<boolean>(false);
   const [localLlmInitialized, setLocalLlmInitialized] = useState<boolean>(false);
   const [webGPUSupported, setWebGPUSupported] = useState<boolean | null>(null);
+  
+  // Ref to track the status before initialization starts
+  const statusBeforeInitRef = useRef<AppStatus>(AppStatus.IDLE);
 
   // Check WebGPU support on mount
   useEffect(() => {
@@ -44,6 +47,9 @@ const App: React.FC = () => {
     const initLlm = async () => {
       if (useLocalLlm && !localLlmInitialized) {
         try {
+          // Capture the current status before we start initialization
+          statusBeforeInitRef.current = status;
+          
           setLoaderMessage('Initializing local AI models (downloading ~200MB, this may take 1-2 minutes)...');
           setStatus(AppStatus.PROCESSING);
           
@@ -54,7 +60,15 @@ const App: React.FC = () => {
           ]);
           
           setLocalLlmInitialized(true);
-          setStatus(AppStatus.IDLE);
+          
+          // Restore the previous status if it wasn't IDLE or PROCESSING
+          // This preserves RECORDED state when toggling AI provider
+          const previousStatus = statusBeforeInitRef.current;
+          if (previousStatus !== AppStatus.IDLE && previousStatus !== AppStatus.PROCESSING) {
+            setStatus(previousStatus);
+          } else {
+            setStatus(AppStatus.IDLE);
+          }
         } catch (err) {
           const errorMessage = err instanceof Error ? err.message : 'Failed to initialize local AI';
           setError(errorMessage);
@@ -64,7 +78,7 @@ const App: React.FC = () => {
       }
     };
     initLlm();
-  }, [useLocalLlm, localLlmInitialized]);
+  }, [useLocalLlm, localLlmInitialized, status]);
 
   const handleVideoRecorded = (blob: Blob) => {
     setVideoBlob(blob);
