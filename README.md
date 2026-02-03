@@ -21,6 +21,7 @@ Beyond simple identification, CineLens acts as your personal movie assistant, fe
 
 - **🎥 In-App Video Recorder**: Seamlessly record video clips directly from your browser.
 - **🧠 Advanced AI Vision**: Powered by Gemini 1.5 Flash for high-fidelity video frame analysis.
+- **🔒 Local AI Mode**: Privacy-first on-device processing using transformers.js with vision capabilities - no API key required, completely private.
 - **🔄 Smart Context Loop**: Validates guesses with you. If the AI is wrong, it learns from the mistake and tries again with added context.
 - **📺 Streaming Discovery**: Instantly find where to watch the identified movie, with a focus on free services (Tubi, Pluto TV, etc.).
 - **⚡ Modern & Fast**: Built with React 19 and Vite for a lightning-fast experience.
@@ -31,7 +32,9 @@ Beyond simple identification, CineLens acts as your personal movie assistant, fe
 - **Frontend Framework**: [React 19](https://react.dev/)
 - **Build Tool**: [Vite](https://vitejs.dev/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **AI Integration**: [Google GenAI SDK](https://www.npmjs.com/package/@google/genai) (Gemini 1.5 Flash)
+- **AI Integration**: 
+  - [Google GenAI SDK](https://www.npmjs.com/package/@google/genai) (Gemini 1.5 Flash) - Primary AI provider
+  - [Transformers.js](https://huggingface.co/docs/transformers.js) (Local browser-based AI with vision) - Privacy-first alternative
 - **Language**: TypeScript
 
 ## 🚀 Getting Started
@@ -42,7 +45,7 @@ Follow these instructions to set up the project locally.
 
 - **Node.js**: Version 18 or higher.
 - **pnpm**: Fast, disk space efficient package manager. Install it globally with `npm install -g pnpm`.
-- **Gemini API Key**: Get a free API key from [Google AI Studio](https://aistudio.google.com/).
+- **Gemini API Key** (Optional): Get a free API key from [Google AI Studio](https://aistudio.google.com/) if you want to use Gemini AI. You can also use the local AI mode without an API key.
 
 ### Installation
 
@@ -59,9 +62,9 @@ Follow these instructions to set up the project locally.
     pnpm install
     ```
 
-3.  **Configure Environment**
+3.  **Configure Environment (Optional for Gemini API)**
 
-    Create a `.env` file in the root directory.
+    To use Gemini API, create a `.env` file in the root directory.
 
     ```bash
     touch .env
@@ -72,6 +75,8 @@ Follow these instructions to set up the project locally.
     ```env
     VITE_API_KEY=your_actual_api_key_here
     ```
+    
+    **Note**: You can skip this step if you plan to use the local AI mode only.
 
 4.  **Run the Application**
 
@@ -82,6 +87,27 @@ Follow these instructions to set up the project locally.
     ```
 
     Open your browser and navigate to `http://localhost:3000`.
+
+## 🤖 AI Modes
+
+CineLens offers two AI modes that you can switch between using the toggle in the header:
+
+### Gemini API Mode (Default - Recommended)
+- **Pros**: Most accurate results, fast inference, excellent at identifying movies, native vision analysis
+- **Cons**: Requires API key, sends data to Google servers, requires internet connection
+- **Best for**: Users who want the best accuracy and have a Gemini API key
+
+### Local AI Mode (Privacy-First)
+- **Pros**: Complete privacy (runs entirely in your browser), no API key needed, works offline after models are downloaded
+- **Cons**: Lower accuracy compared to Gemini, requires modern browser with WebGPU for best performance, initial model download (~200MB), slower inference
+- **How it works**: Uses image-to-text model (ViT-GPT2) to generate captions from video frames, then uses a text generation model (SmolLM2) to identify the movie from those captions
+- **Best for**: Privacy-conscious users, offline usage, or users without an API key
+- **Browser Support**: Best in Chrome/Edge with WebGPU. Falls back to WebAssembly in other browsers.
+- **Model Cache**: After first download (~200MB total), models are cached in browser storage (IndexedDB) for offline use.
+
+**Note**: Local AI mode uses a two-step approach (vision → captions → identification) which may be less accurate than Gemini's direct vision analysis, but provides a fully private, no-API-key alternative.
+
+To switch modes, simply click the toggle switch in the header. The first time you enable Local AI mode, the models will download and initialize (this may take 1-2 minutes).
 
 ## 📁 Project Structure
 
