@@ -7,7 +7,7 @@ const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 export async function identifyMovieFromFrames(base64Frames: string[], previousGuesses: string[] = []): Promise<string> {
   if (!ai) {
-    throw new Error("Gemini API key not configured. Please use Local AI mode or set VITE_API_KEY.");
+    throw new Error("Gemini API key not configured. Set VITE_API_KEY environment variable to use this service.");
   }
   
   if (base64Frames.length === 0) {
@@ -53,7 +53,7 @@ export async function identifyMovieFromFrames(base64Frames: string[], previousGu
 
 export async function searchMovieInfo(movieTitle: string): Promise<{ movieInfoUrl: string | null; posterUrl: string | null; streamingPlatforms: { name: string; type: string; url: string; }[] }> {
   if (!ai) {
-    throw new Error("Gemini API key not configured. Please use Local AI mode or set VITE_API_KEY.");
+    throw new Error("Gemini API key not configured. Set VITE_API_KEY environment variable to use this service.");
   }
   
   const model = 'gemini-2.5-flash';
