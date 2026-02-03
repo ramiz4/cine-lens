@@ -137,8 +137,11 @@ CineLens is configured to automatically deploy to GitHub Pages whenever you push
 
 ### Important Notes
 
+- **API Key Security**: The API key is embedded in the client-side JavaScript bundle and is visible to users who visit your site. This is the intended design for client-side Gemini API usage. To protect your key:
+  - Set up HTTP referrer restrictions in [Google AI Studio](https://aistudio.google.com/) to limit usage to your domain
+  - Monitor your API usage regularly
+  - Consider using Local AI mode for privacy-sensitive deployments (no API key required)
 - **Never commit your API key** to the repository. The `.env` file (if you create one locally) is already ignored by `.gitignore`
-- The secret is only used during the build process and is not exposed in the deployed application
 - If you see the error "Gemini API key not configured" on your deployed site, verify that:
   1. The `VITE_API_KEY` secret is correctly set in GitHub
   2. The deployment workflow has run successfully after adding the secret

@@ -77,12 +77,40 @@ If you don't want to use the Gemini API, CineLens also supports a Local AI mode:
 
 ## Security Notes
 
-- ✅ Your API key is stored securely in GitHub Secrets
-- ✅ The key is only used during the build process
-- ✅ The key is NOT exposed in the deployed application code
-- ✅ Each API request is made directly from the user's browser to Google's servers
-- ⚠️ Never commit your API key to the repository
-- ⚠️ Never share your API key publicly
+### How the API Key Works
+
+The Gemini API key is embedded in the client-side JavaScript bundle during the build process. This means:
+
+- ✅ The API key is accessible in the browser (this is the intended design for client-side Gemini API usage)
+- ✅ API requests are made directly from the user's browser to Google's servers
+- ✅ Your GitHub Secret keeps the key out of your repository
+- ⚠️ Anyone who visits your site can technically extract the API key from the JavaScript bundle
+
+### Protecting Your API Key
+
+Since the API key is client-side and visible in the browser, you should protect it using Google Cloud Console restrictions:
+
+1. **Set Application Restrictions** in [Google AI Studio](https://aistudio.google.com/):
+   - Restrict the API key to specific HTTP referrers (your GitHub Pages domain)
+   - Example: `https://<your-username>.github.io/*` or `https://yourdomain.com/*`
+
+2. **Monitor API Usage**:
+   - Regularly check your API usage in Google AI Studio
+   - Set up usage quotas to prevent unexpected charges
+   - The free tier has built-in rate limits
+
+3. **API Restrictions**:
+   - The API key should only be enabled for the Gemini API
+   - Disable any other Google APIs you're not using
+
+### Best Practices
+
+- ✅ Store the key in GitHub Secrets (never commit to repository)
+- ✅ Use HTTP referrer restrictions in Google Cloud Console
+- ✅ Monitor your API usage regularly
+- ✅ Use the free tier's built-in rate limits
+- ⚠️ Don't share your repository's GitHub Pages URL publicly if you're concerned about API usage
+- ℹ️ Consider using Local AI mode for privacy-sensitive deployments (no API key required)
 
 ## Troubleshooting
 
