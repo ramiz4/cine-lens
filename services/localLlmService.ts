@@ -55,7 +55,7 @@ export async function initializeImageToText(): Promise<void> {
       device = 'wasm';
     }
 
-    // Use BLIP for image captioning - it's well-tested and reliable for browser use
+    // Use ViT-GPT2 for image captioning - efficient and well-tested for browser use
     imageToTextPipeline = await pipeline(
       'image-to-text',
       'Xenova/vit-gpt2-image-captioning',
