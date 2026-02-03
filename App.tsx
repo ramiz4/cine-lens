@@ -78,7 +78,7 @@ const App: React.FC = () => {
       }
     };
     initLlm();
-  }, [useLocalLlm, localLlmInitialized, status]);
+  }, [useLocalLlm, localLlmInitialized]);
 
   const handleVideoRecorded = (blob: Blob) => {
     setVideoBlob(blob);
