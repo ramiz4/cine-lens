@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { AppStatus } from './types';
 import VideoRecorder from './components/VideoRecorder';
 import ResultDisplay from './components/ResultDisplay';
 import Loader from './components/Loader';
-import { identifyMovieFromFrames, searchMovieInfo } from './services/geminiService';
+import * as geminiService from './services/geminiService';
+import * as localLlmService from './services/localLlmService';
 import { extractFramesFromVideo } from './utils/video';
 
 interface StreamingPlatform {
@@ -25,6 +26,39 @@ const App: React.FC = () => {
   const [previousGuesses, setPreviousGuesses] = useState<string[]>([]);
   const [movieInfo, setMovieInfo] = useState<MovieInfo | null>(null);
   const [loaderMessage, setLoaderMessage] = useState<string>('');
+  const [useLocalLlm, setUseLocalLlm] = useState<boolean>(false);
+  const [localLlmInitialized, setLocalLlmInitialized] = useState<boolean>(false);
+  const [webGPUSupported, setWebGPUSupported] = useState<boolean | null>(null);
+
+  // Check WebGPU support on mount
+  useEffect(() => {
+    const checkSupport = async () => {
+      const supported = await localLlmService.checkWebGPUSupport();
+      setWebGPUSupported(supported);
+    };
+    checkSupport();
+  }, []);
+
+  // Initialize local LLM when toggled on
+  useEffect(() => {
+    const initLlm = async () => {
+      if (useLocalLlm && !localLlmInitialized) {
+        try {
+          setLoaderMessage('Initializing local LLM (this may take a moment)...');
+          setStatus(AppStatus.PROCESSING);
+          await localLlmService.initializeLocalLlm();
+          setLocalLlmInitialized(true);
+          setStatus(AppStatus.IDLE);
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : 'Failed to initialize local LLM';
+          setError(errorMessage);
+          setStatus(AppStatus.ERROR);
+          setUseLocalLlm(false); // Fall back to API mode
+        }
+      }
+    };
+    initLlm();
+  }, [useLocalLlm, localLlmInitialized]);
 
   const handleVideoRecorded = (blob: Blob) => {
     setVideoBlob(blob);
@@ -49,8 +83,11 @@ const App: React.FC = () => {
         throw new Error('Could not extract frames from the video.');
       }
       
-      setLoaderMessage('Analyzing scene with Gemini AI...');
-      const title = await identifyMovieFromFrames(frames, guesses);
+      setLoaderMessage(useLocalLlm ? 'Analyzing scene with local AI...' : 'Analyzing scene with Gemini AI...');
+      
+      // Use the appropriate service based on the toggle
+      const service = useLocalLlm ? localLlmService : geminiService;
+      const title = await service.identifyMovieFromFrames(frames, guesses);
       
       if (title.trim().toLowerCase() === 'unknown') {
         throw new Error("The AI could not confidently identify the movie from this clip. Please try recording a clearer or longer scene.");
@@ -76,7 +113,9 @@ const App: React.FC = () => {
     setStatus(AppStatus.PROCESSING);
     setLoaderMessage(`Searching for details on "${movieTitle}"...`);
     try {
-      const info = await searchMovieInfo(movieTitle);
+      // Use the appropriate service based on the toggle
+      const service = useLocalLlm ? localLlmService : geminiService;
+      const info = await service.searchMovieInfo(movieTitle);
       setMovieInfo(info);
       setStatus(AppStatus.SUCCESS);
     } catch (err) {
@@ -84,7 +123,7 @@ const App: React.FC = () => {
       setError(`Failed to fetch movie details. ${errorMessage}`);
       setStatus(AppStatus.ERROR);
     }
-  }, [movieTitle]);
+  }, [movieTitle, useLocalLlm]);
 
   const handleReset = () => {
     setStatus(AppStatus.IDLE);
@@ -177,12 +216,46 @@ const App: React.FC = () => {
           <p className="mt-2 text-lg text-gray-300">
             Identify any movie scene instantly.
           </p>
+          
+          {/* AI Provider Toggle */}
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <span className="text-sm text-gray-400">Gemini API</span>
+            <button
+              onClick={() => setUseLocalLlm(!useLocalLlm)}
+              disabled={status === AppStatus.PROCESSING}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 ${
+                useLocalLlm ? 'bg-blue-600' : 'bg-gray-600'
+              } ${status === AppStatus.PROCESSING ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              role="switch"
+              aria-checked={useLocalLlm}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  useLocalLlm ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span className="text-sm text-gray-400">
+              Local AI {webGPUSupported === false && '(WebGPU unavailable)'}
+            </span>
+          </div>
+          
+          {useLocalLlm && !localLlmInitialized && status !== AppStatus.PROCESSING && (
+            <p className="mt-2 text-xs text-yellow-400">
+              ⚠️ Local AI will initialize on first use (may take a minute)
+            </p>
+          )}
+          {useLocalLlm && localLlmInitialized && (
+            <p className="mt-2 text-xs text-green-400">
+              ✓ Local AI ready
+            </p>
+          )}
         </header>
         <main className="bg-gray-800/50 p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700">
           {renderContent()}
         </main>
         <footer className="mt-8 text-gray-500 text-sm">
-          <p>Powered by Gemini API</p>
+          <p>Powered by {useLocalLlm ? 'Local AI (transformers.js)' : 'Gemini API'}</p>
         </footer>
       </div>
     </div>
