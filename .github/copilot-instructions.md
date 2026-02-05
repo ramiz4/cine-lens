@@ -52,7 +52,7 @@ CineLens is an intelligent web application that identifies movies from video cli
 ## AI Service Integration Patterns
 
 ### Gemini API (geminiService.ts)
-- Uses Google's Gemini 1.5 Flash model for video frame analysis
+- Uses Google's Gemini 2.5 Flash model for video frame analysis
 - Requires API key from environment variable `VITE_API_KEY`
 - Processes video frames directly with native vision capabilities
 - Use for high-accuracy movie identification
