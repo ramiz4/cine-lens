@@ -5,7 +5,7 @@
 
 ### 🎬 Identify any movie scene instantly using the power of Gemini AI
 
-[Features](#-features) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Contributing](#-contributing)
+[Features](#-features) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Deployment](#-deploying-to-github-pages) • [Contributing](#-contributing)
 
 </div>
 
@@ -108,6 +108,46 @@ CineLens offers two AI modes that you can switch between using the toggle in the
 **Note**: Local AI mode uses a two-step approach (vision → captions → identification) which may be less accurate than Gemini's direct vision analysis, but provides a fully private, no-API-key alternative.
 
 To switch modes, simply click the toggle switch in the header. The first time you enable Local AI mode, the models will download and initialize (this may take 1-2 minutes).
+
+## 🚀 Deploying to GitHub Pages
+
+CineLens is configured to automatically deploy to GitHub Pages whenever you push to the `main` branch. To enable Gemini API functionality in your deployed application, you need to add your API key as a GitHub secret.
+
+### Setting Up GitHub Secrets
+
+1. **Get your Gemini API Key**
+   - Visit [Google AI Studio](https://aistudio.google.com/)
+   - Sign in with your Google account
+   - Generate a free API key
+
+2. **Add the Secret to Your GitHub Repository**
+   - Go to your repository on GitHub
+   - Click on **Settings** (top menu bar)
+   - In the left sidebar, navigate to **Secrets and variables** → **Actions**
+   - Click the **New repository secret** button
+   - Add the following secret:
+     - **Name**: `VITE_API_KEY`
+     - **Value**: Your actual Gemini API key (e.g., `AIza...`)
+   - Click **Add secret**
+
+3. **Trigger Deployment**
+   - The GitHub Actions workflow will automatically build and deploy your site
+   - The API key will be securely injected during the build process
+   - Your deployed application will now have full Gemini API functionality
+
+### Important Notes
+
+- **API Key Security**: The API key is embedded in the client-side JavaScript bundle and is visible to users who visit your site. This is the intended design for client-side Gemini API usage. To protect your key:
+  - Set up HTTP referrer restrictions in [Google AI Studio](https://aistudio.google.com/) to limit usage to your domain
+  - Monitor your API usage regularly
+  - Consider using Local AI mode for privacy-sensitive deployments (no API key required)
+- **Never commit your API key** to the repository. The `.env` file is now included in `.gitignore` to prevent accidental commits
+- If you see the error "Gemini API key not configured" on your deployed site, verify that:
+  1. The `VITE_API_KEY` secret is correctly set in GitHub
+  2. The deployment workflow has run successfully after adding the secret
+- Local AI mode does not require any API key and can be used as an alternative
+
+📖 **For detailed deployment instructions with troubleshooting, see [DEPLOYMENT.md](DEPLOYMENT.md)**
 
 ## 📁 Project Structure
 
