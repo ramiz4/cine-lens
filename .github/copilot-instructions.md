@@ -29,7 +29,7 @@ CineLens is an intelligent web application that identifies movies from video cli
 - **NEVER** use class components
 - Use TypeScript with strict typing - avoid `any` types
 - Prefer `interface` over `type` for object types
-- Use named exports for components
+- Use default exports for components
 - Components should be in PascalCase (e.g., `VideoRecorder.tsx`)
 
 ### File Organization
