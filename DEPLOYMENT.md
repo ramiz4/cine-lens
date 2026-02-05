@@ -83,32 +83,41 @@ The Gemini API key is embedded in the client-side JavaScript bundle during the b
 
 - ✅ The API key is accessible in the browser (this is the intended design for client-side Gemini API usage)
 - ✅ API requests are made directly from the user's browser to Google's servers
-- ✅ Your GitHub Secret keeps the key out of your repository
-- ⚠️ Anyone who visits your site can technically extract the API key from the JavaScript bundle
+- ✅ Your GitHub Secret keeps the key out of your repository and commit history
+- ⚠️ Anyone who visits your site can view and extract the API key from the JavaScript bundle or network requests, and potentially reuse it for their own calls
 
 ### Protecting Your API Key
 
-Since the API key is client-side and visible in the browser, you should protect it using Google Cloud Console restrictions:
+Because the API key runs in the browser and cannot be fully hidden in this setup, you should mitigate the risk using one of the following approaches:
 
-1. **Set Application Restrictions** in [Google AI Studio](https://aistudio.google.com/):
+1. **Set Application Restrictions in Google AI Studio** (Recommended for this static site):
+   - Go to [Google AI Studio](https://aistudio.google.com/) and configure your API key
    - Restrict the API key to specific HTTP referrers (your GitHub Pages domain)
    - Example: `https://<your-username>.github.io/*` or `https://yourdomain.com/*`
+   - This prevents the key from being used on other domains, even if someone extracts it
 
-2. **Monitor API Usage**:
+2. **Use a Backend Service** (Most Secure):
+   - Move Gemini API calls to your own backend (e.g., a server or serverless function)
+   - The API key is kept server-side and never sent to the browser
+   - Your frontend calls your backend, and only the backend talks to the Gemini API
+   - This is the only way to truly hide the API key from users
+
+3. **Monitor API Usage**:
    - Regularly check your API usage in Google AI Studio
    - Set up usage quotas to prevent unexpected charges
    - The free tier has built-in rate limits
 
-3. **API Restrictions**:
+4. **API Restrictions**:
    - The API key should only be enabled for the Gemini API
    - Disable any other Google APIs you're not using
 
 ### Best Practices
 
 - ✅ Store the key in GitHub Secrets (never commit to repository)
-- ✅ Use HTTP referrer restrictions in Google Cloud Console
+- ✅ Use HTTP referrer restrictions in Google Cloud Console (essential for client-side usage)
 - ✅ Monitor your API usage regularly
 - ✅ Use the free tier's built-in rate limits
+- ⚠️ Be aware that the API key is publicly visible to anyone who visits your site
 - ⚠️ Don't share your repository's GitHub Pages URL publicly if you're concerned about API usage
 - ℹ️ Consider using Local AI mode for privacy-sensitive deployments (no API key required)
 
@@ -159,7 +168,7 @@ For local development, you don't need to use GitHub secrets:
    VITE_API_KEY=your_actual_api_key_here
    ```
 
-3. The `.env` file is automatically ignored by git
+3. The `.env` file is included in `.gitignore` to prevent accidental commits
 
 4. Run the development server:
    ```bash
