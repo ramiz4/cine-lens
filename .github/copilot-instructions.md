@@ -96,7 +96,7 @@ CineLens is an intelligent web application that identifies movies from video cli
 
 ### Scripts
 ```bash
-pnpm install    # Install dependencies
+pnpm install    # Install dependencies (standard pnpm command, not a project script)
 pnpm dev        # Start development server on port 3000
 pnpm build      # Build for production
 pnpm preview    # Preview production build
