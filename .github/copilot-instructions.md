@@ -59,7 +59,7 @@ CineLens is an intelligent web application that identifies movies from video cli
 
 ### Local LLM (localLlmService.ts)
 - Privacy-first, browser-based AI using Transformers.js
-- Two-step process: image-to-text (ViT-GPT2) → text generation (SmolLM2)
+- Two-step process: image-to-text (ViT-GPT2) → text generation (Xenova/SmolLM2-360M-Instruct)
 - WebGPU support for best performance, falls back to WebAssembly
 - Models cached in IndexedDB (~200MB)
 - Always check WebGPU support before initialization
