@@ -94,13 +94,13 @@ Because the API key runs in the browser and cannot be fully hidden in this setup
    - Go to [Google AI Studio](https://aistudio.google.com/) and configure your API key
    - Restrict the API key to specific HTTP referrers (your GitHub Pages domain)
    - Example: `https://<your-username>.github.io/*` or `https://yourdomain.com/*`
-   - This prevents the key from being used on other domains, even if someone extracts it
+   - This helps mitigate unauthorized usage by restricting requests to specific domains
 
 2. **Use a Backend Service** (Most Secure):
    - Move Gemini API calls to your own backend (e.g., a server or serverless function)
    - The API key is kept server-side and never sent to the browser
    - Your frontend calls your backend, and only the backend talks to the Gemini API
-   - This is the only way to truly hide the API key from users
+   - This is the most secure approach as it prevents direct exposure of the API key to users
 
 3. **Monitor API Usage**:
    - Regularly check your API usage in Google AI Studio
