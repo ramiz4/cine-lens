@@ -135,10 +135,10 @@ const [loaderMessage, setLoaderMessage] = useState<string>('');
 ### AI Service Calls
 ```typescript
 // Gemini API
-await geminiService.identifyMovie(frames, previousGuesses);
+await geminiService.identifyMovieFromFrames(frames, previousGuesses);
 
 // Local LLM
-await localLlmService.identifyMovie(frames, previousGuesses);
+await localLlmService.identifyMovieFromFrames(frames, previousGuesses);
 ```
 
 ### Cleanup Pattern
