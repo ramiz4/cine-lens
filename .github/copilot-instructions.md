@@ -15,7 +15,7 @@ CineLens is an intelligent web application that identifies movies from video cli
 
 - **Frontend Framework**: React 19 with functional components and hooks
 - **Build Tool**: Vite 6.2.0
-- **Styling**: Tailwind CSS (inline styles, dark-mode first)
+- **Styling**: Tailwind CSS via CDN (inline utility classes, dark-mode first; no Tailwind build pipeline)
 - **Language**: TypeScript (strict mode)
 - **AI Integration**:
   - Google GenAI SDK (@google/genai) for Gemini 1.5 Flash
