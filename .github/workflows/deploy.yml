@@ -51,7 +51,7 @@ jobs:
       - name: Build
         env:
           VITE_API_KEY: ${{ secrets.VITE_API_KEY }}
-        run: pnpm run build --base=/cine-lens/
+        run: pnpm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
