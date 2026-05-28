@@ -51,6 +51,7 @@ jobs:
       - name: Build
         env:
           VITE_API_KEY: ${{ secrets.VITE_API_KEY }}
+          GITHUB_PAGES: 'true'
         run: pnpm run build
 
       - name: Upload artifact
