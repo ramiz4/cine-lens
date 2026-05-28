@@ -40,7 +40,7 @@ jobs:
       - name: Setup pnpm cache
         uses: actions/cache@v4
         with:
-          path: ${{ env.STORE_PATH }}
+          path: ${{ env.STORE_PATH != '' && env.STORE_PATH || '~/.local/share/pnpm/store' }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
@@ -51,6 +51,7 @@ jobs:
       - name: Build
         env:
           VITE_API_KEY: ${{ secrets.VITE_API_KEY }}
+          GITHUB_PAGES: 'true'
         run: pnpm run build
 
       - name: Upload artifact
