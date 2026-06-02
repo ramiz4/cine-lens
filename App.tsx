@@ -50,12 +50,10 @@ const App: React.FC = () => {
           // Capture the current status before we start initialization
           statusBeforeInitRef.current = status;
           
-          setLoaderMessage('Initializing local AI models (downloading ~200MB, this may take 1-2 minutes)...');
+          setLoaderMessage('Initializing SmolVLM-256M (downloading ~200 MB on first use, 1–2 minutes)...');
           setStatus(AppStatus.PROCESSING);
           
-          // Initialize vision model and text generation model sequentially
-          // to improve failure isolation and diagnostics
-          await localLlmService.initializeImageToText();
+          // Single VLM model replaces the previous two-model pipeline
           await localLlmService.initializeLocalLlm();
           
           setLocalLlmInitialized(true);
@@ -261,12 +259,12 @@ const App: React.FC = () => {
           
           {useLocalLlm && !localLlmInitialized && status !== AppStatus.PROCESSING && (
             <p className="mt-2 text-xs text-yellow-400">
-              ⚠️ Local AI will download models on first use (~200MB, 1-2 minutes)
+              ⚠️ Local AI will download SmolVLM-256M on first use (~200 MB, 1–2 minutes)
             </p>
           )}
           {useLocalLlm && localLlmInitialized && (
             <p className="mt-2 text-xs text-green-400">
-              ✓ Local AI ready (vision + text models loaded)
+              ✓ Local AI ready (SmolVLM-256M loaded)
             </p>
           )}
         </header>
