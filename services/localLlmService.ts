@@ -1,72 +1,64 @@
-import { pipeline, Pipeline } from "@huggingface/transformers";
+import { AutoProcessor, AutoModelForVision2Seq, RawImage, env } from "@huggingface/transformers";
 
-// Cache the pipeline instances to avoid re-initialization
-let textGenerationPipeline: Pipeline | null = null;
-let imageToTextPipeline: Pipeline | null = null;
+// Disable WASM multi-threading to avoid SharedArrayBuffer requirement.
+// GitHub Pages does not serve COOP/COEP headers, and iOS Safari requires
+// explicit opt-in. Single-threaded WASM is universally compatible.
+(env as any).backends.onnx.wasm.numThreads = 1;
 
-// Initialize the local LLM pipeline for text generation
-export async function initializeLocalLlm(): Promise<void> {
-  if (textGenerationPipeline) {
-    return; // Already initialized
-  }
+const MODEL_ID = 'onnx-community/SmolVLM-256M-Instruct';
+
+// A single vision-language model replaces the previous two-model pipeline.
+// SmolVLM-256M-Instruct accepts an image + text prompt directly and produces
+// a coherent natural-language answer — no separate captioning step required.
+let vlmProcessor: InstanceType<typeof AutoProcessor> | null = null;
+let vlmModel: Awaited<ReturnType<typeof AutoModelForVision2Seq.from_pretrained>> | null = null;
+
+async function initializeVlm(): Promise<void> {
+  if (vlmModel) return;
 
   try {
-    // Try WebGPU first, fall back to WebAssembly if unavailable
-    let device: 'webgpu' | 'wasm' = 'webgpu';
-    try {
-      const adapter = await (navigator as any).gpu?.requestAdapter();
-      if (!adapter) {
-        device = 'wasm';
-      }
-    } catch {
-      device = 'wasm';
-    }
+    vlmProcessor = await AutoProcessor.from_pretrained(MODEL_ID);
 
-    // Use a small, efficient model suitable for browser inference
-    textGenerationPipeline = await pipeline(
-      'text-generation',
-      'Xenova/SmolLM2-360M-Instruct',
-      {
-        device: device,
-        dtype: 'q8', // Use quantized model for smaller size
-      }
-    );
+    try {
+      // WebGPU path — mixed precision for best performance.
+      // fp16 vision/embed + q4 decoder works on all WebGPU devices including
+      // iPhone 16 Pro (Apple GPU via Metal) with iOS 17.4+.
+      vlmModel = await AutoModelForVision2Seq.from_pretrained(MODEL_ID, {
+        dtype: {
+          embed_tokens: 'fp16',
+          vision_encoder: 'fp16',
+          decoder_model_merged: 'q4',
+        },
+        device: 'webgpu',
+      });
+    } catch (webgpuError) {
+      // WASM fallback — uniform q4 keeps the download ~200 MB and fits within
+      // iOS Safari's memory budget. numThreads=1 (set above) avoids
+      // SharedArrayBuffer, making this path work on GitHub Pages and iOS.
+      console.warn('WebGPU initialization failed, retrying with WASM:', webgpuError);
+      vlmModel = await AutoModelForVision2Seq.from_pretrained(MODEL_ID, {
+        dtype: 'q4',
+        device: 'wasm',
+      });
+    }
   } catch (error) {
-    console.error("Error initializing local LLM:", error);
-    throw new Error("Failed to initialize local LLM. Please ensure your browser supports WebGPU or WebAssembly.");
+    vlmProcessor = null;
+    vlmModel = null;
+    console.error("Error initializing SmolVLM:", error);
+    throw new Error(
+      `Failed to initialize local AI model: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
-// Initialize the image-to-text pipeline for vision analysis
+// Public initializers — both delegate to the single VLM so callers in App.tsx
+// that call each one independently still work correctly.
+export async function initializeLocalLlm(): Promise<void> {
+  await initializeVlm();
+}
+
 export async function initializeImageToText(): Promise<void> {
-  if (imageToTextPipeline) {
-    return; // Already initialized
-  }
-
-  try {
-    // Try WebGPU first, fall back to WebAssembly if unavailable
-    let device: 'webgpu' | 'wasm' = 'webgpu';
-    try {
-      const adapter = await (navigator as any).gpu?.requestAdapter();
-      if (!adapter) {
-        device = 'wasm';
-      }
-    } catch {
-      device = 'wasm';
-    }
-
-    // Use ViT-GPT2 for image captioning - efficient and well-tested for browser use
-    imageToTextPipeline = await pipeline(
-      'image-to-text',
-      'Xenova/vit-gpt2-image-captioning',
-      {
-        device: device,
-      }
-    );
-  } catch (error) {
-    console.error("Error initializing image-to-text pipeline:", error);
-    throw new Error("Failed to initialize vision model. Please ensure your browser supports WebGPU or WebAssembly.");
-  }
+  await initializeVlm();
 }
 
 export async function identifyMovieFromFrames(
@@ -77,82 +69,81 @@ export async function identifyMovieFromFrames(
     throw new Error("No frames provided to identify the movie.");
   }
 
-  // Initialize both pipelines if not already done
-  if (!imageToTextPipeline) {
-    await initializeImageToText();
-  }
-  if (!textGenerationPipeline) {
-    await initializeLocalLlm();
+  if (!vlmModel || !vlmProcessor) {
+    await initializeVlm();
   }
 
-  if (!imageToTextPipeline || !textGenerationPipeline) {
-    throw new Error("Local AI models not initialized");
+  if (!vlmModel || !vlmProcessor) {
+    throw new Error("Local AI model not initialized");
   }
 
   try {
-    // Step 1: Generate captions for each frame using image-to-text
-    const captions: string[] = [];
-    
-    // Process up to 3 frames to keep it manageable
-    const framesToProcess = base64Frames.slice(0, 3);
-    
-    for (const frame of framesToProcess) {
-      // Convert base64 to data URL
-      const imageUrl = `data:image/jpeg;base64,${frame}`;
-      
-      // Generate caption for this frame
-      const result = await imageToTextPipeline(imageUrl);
-      
-      // Extract the generated text from the result
-      if (Array.isArray(result) && result.length > 0 && result[0].generated_text) {
-        captions.push(result[0].generated_text);
+    const previousGuessContext = previousGuesses.length > 0
+      ? ` The following guesses were already made and are incorrect — do not repeat them: ${previousGuesses.join(', ')}.`
+      : '';
+
+    // Query up to 3 frames independently; pick the most common answer.
+    const frameAnswers: string[] = [];
+
+    for (const frame of base64Frames.slice(0, 3)) {
+      const image = await RawImage.fromURL(`data:image/jpeg;base64,${frame}`);
+
+      const messages = [
+        {
+          role: 'user',
+          content: [
+            { type: 'image' },
+            {
+              type: 'text',
+              text: `You are a movie expert. Examine this video frame and identify the movie or TV show it is from. Consider the actors, costumes, set design, cinematography, and any visible text or logos.${previousGuessContext} Reply with ONLY the movie or TV show title. If you cannot identify it with confidence, reply with "Unknown".`,
+            },
+          ],
+        },
+      ];
+
+      const promptStr = (vlmProcessor as any).apply_chat_template(messages, {
+        add_generation_prompt: true,
+      });
+
+      const inputs = await (vlmProcessor as any)(promptStr, [image], {
+        do_image_splitting: false,
+      });
+
+      const generatedIds = await (vlmModel as any).generate({
+        ...inputs,
+        max_new_tokens: 50,
+        do_sample: false,
+      });
+
+      // Decode only the newly generated tokens (skip the prompt tokens).
+      const inputLength = inputs.input_ids.dims.at(-1);
+      const decoded: string[] = (vlmProcessor as any).batch_decode(
+        generatedIds.slice(null, [inputLength, null]),
+        { skip_special_tokens: true }
+      );
+
+      const answer = decoded[0]?.trim();
+      if (answer && answer.toLowerCase() !== 'unknown') {
+        frameAnswers.push(answer);
       }
     }
 
-    if (captions.length === 0) {
-      throw new Error("Could not generate captions from video frames.");
-    }
-
-    // Step 2: Use text generation model to identify the movie from captions
-    const captionsText = captions.map((c, i) => `Frame ${i + 1}: ${c}`).join('\n');
-    
-    let prompt = `You are a movie identification expert. Based on these scene descriptions from video frames, identify the movie title.
-
-${captionsText}
-
-Previous incorrect guesses: ${previousGuesses.length > 0 ? previousGuesses.join(', ') : 'None'}
-
-Based on the visual descriptions above, what is the most likely movie title? Respond with ONLY the movie title, nothing else. If you cannot identify the movie with confidence, respond with "Unknown".
-
-Movie title:`;
-
-    const response = await textGenerationPipeline(prompt, {
-      max_new_tokens: 30,
-      do_sample: false,
-      temperature: 0.1,
-    });
-
-    // Extract the generated text
-    if (!Array.isArray(response) || response.length === 0 || !response[0].generated_text) {
-      throw new Error("No response from text generation model");
-    }
-
-    const fullText = response[0].generated_text;
-    
-    // Extract just the movie title (after the prompt)
-    const movieTitle = fullText.replace(prompt, '').trim();
-    
-    // Clean up the response
-    const cleanedTitle = movieTitle
-      .split('\n')[0] // Take first line only
-      .replace(/^["']|["']$/g, '') // Remove quotes
-      .trim();
-    
-    if (!cleanedTitle || cleanedTitle.toLowerCase() === 'unknown') {
+    if (frameAnswers.length === 0) {
       return "Unknown";
     }
 
-    return cleanedTitle;
+    // Return the most frequently agreed-upon title across frames.
+    const frequency: Record<string, number> = {};
+    for (const answer of frameAnswers) {
+      frequency[answer] = (frequency[answer] || 0) + 1;
+    }
+    const best = Object.entries(frequency).sort((a, b) => b[1] - a[1])[0][0];
+
+    return best
+      .split('\n')[0]
+      .replace(/^["']|["']$/g, '')
+      .trim() || "Unknown";
+
   } catch (error) {
     console.error("Error calling local AI for movie identification:", error);
     throw new Error("The local AI failed to process the video frames. Please try again.");
@@ -164,20 +155,20 @@ export async function searchMovieInfo(movieTitle: string): Promise<{
   posterUrl: string | null;
   streamingPlatforms: { name: string; type: string; url: string; }[];
 }> {
-  // Initialize pipeline if not already done
-  if (!textGenerationPipeline) {
-    await initializeLocalLlm();
+  // Initialize model if not already done
+  if (!vlmModel) {
+    await initializeVlm();
   }
 
-  if (!textGenerationPipeline) {
-    throw new Error("Local LLM not initialized");
+  if (!vlmModel) {
+    throw new Error("Local AI model not initialized");
   }
 
-  // LIMITATION: Small local LLMs cannot provide accurate real-time URLs 
+  // LIMITATION: Small local VLMs cannot provide accurate real-time URLs
   // or streaming platform information without access to search or current databases.
-  // Instead of hallucinating data, we'll provide common/likely sources
+  // Instead of hallucinating data, we provide common/likely sources
   // and let users know this is limited.
-  
+
   console.warn(
     "Local AI mode has limited movie information capabilities. " +
     "Providing common sources only. For accurate streaming info, use Gemini API mode."
