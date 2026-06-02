@@ -53,11 +53,10 @@ const App: React.FC = () => {
           setLoaderMessage('Initializing local AI models (downloading ~200MB, this may take 1-2 minutes)...');
           setStatus(AppStatus.PROCESSING);
           
-          // Initialize both the vision model and text generation model
-          await Promise.all([
-            localLlmService.initializeImageToText(),
-            localLlmService.initializeLocalLlm()
-          ]);
+          // Initialize vision model and text generation model sequentially
+          // to improve failure isolation and diagnostics
+          await localLlmService.initializeImageToText();
+          await localLlmService.initializeLocalLlm();
           
           setLocalLlmInitialized(true);
           

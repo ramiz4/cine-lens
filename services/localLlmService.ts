@@ -11,29 +11,32 @@ export async function initializeLocalLlm(): Promise<void> {
   }
 
   try {
-    // Try WebGPU first, fall back to WebAssembly if unavailable
-    let device: 'webgpu' | 'wasm' = 'webgpu';
+    // Try WebGPU with quantized model first for best performance
     try {
-      const adapter = await (navigator as any).gpu?.requestAdapter();
-      if (!adapter) {
-        device = 'wasm';
-      }
-    } catch {
-      device = 'wasm';
+      textGenerationPipeline = await pipeline(
+        'text-generation',
+        'Xenova/SmolLM2-360M-Instruct',
+        {
+          device: 'webgpu',
+          dtype: 'q8', // Use quantized model for smaller size
+        }
+      );
+    } catch (webgpuError) {
+      // WebGPU unavailable or failed — retry with WASM
+      console.warn('WebGPU initialization failed for text generation, retrying with WASM:', webgpuError);
+      textGenerationPipeline = await pipeline(
+        'text-generation',
+        'Xenova/SmolLM2-360M-Instruct',
+        {
+          device: 'wasm',
+        }
+      );
     }
-
-    // Use a small, efficient model suitable for browser inference
-    textGenerationPipeline = await pipeline(
-      'text-generation',
-      'Xenova/SmolLM2-360M-Instruct',
-      {
-        device: device,
-        dtype: 'q8', // Use quantized model for smaller size
-      }
-    );
   } catch (error) {
     console.error("Error initializing local LLM:", error);
-    throw new Error("Failed to initialize local LLM. Please ensure your browser supports WebGPU or WebAssembly.");
+    throw new Error(
+      `Failed to initialize local LLM: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
@@ -44,28 +47,31 @@ export async function initializeImageToText(): Promise<void> {
   }
 
   try {
-    // Try WebGPU first, fall back to WebAssembly if unavailable
-    let device: 'webgpu' | 'wasm' = 'webgpu';
+    // Try WebGPU first for best performance
     try {
-      const adapter = await (navigator as any).gpu?.requestAdapter();
-      if (!adapter) {
-        device = 'wasm';
-      }
-    } catch {
-      device = 'wasm';
+      imageToTextPipeline = await pipeline(
+        'image-to-text',
+        'Xenova/vit-gpt2-image-captioning',
+        {
+          device: 'webgpu',
+        }
+      );
+    } catch (webgpuError) {
+      // WebGPU unavailable or failed — retry with WASM
+      console.warn('WebGPU initialization failed for image-to-text, retrying with WASM:', webgpuError);
+      imageToTextPipeline = await pipeline(
+        'image-to-text',
+        'Xenova/vit-gpt2-image-captioning',
+        {
+          device: 'wasm',
+        }
+      );
     }
-
-    // Use ViT-GPT2 for image captioning - efficient and well-tested for browser use
-    imageToTextPipeline = await pipeline(
-      'image-to-text',
-      'Xenova/vit-gpt2-image-captioning',
-      {
-        device: device,
-      }
-    );
   } catch (error) {
     console.error("Error initializing image-to-text pipeline:", error);
-    throw new Error("Failed to initialize vision model. Please ensure your browser supports WebGPU or WebAssembly.");
+    throw new Error(
+      `Failed to initialize vision model: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
