@@ -5,7 +5,11 @@ import { AutoProcessor, AutoModelForVision2Seq, RawImage, env } from "@huggingfa
 // explicit opt-in. Single-threaded WASM is universally compatible.
 (env as any).backends.onnx.wasm.numThreads = 1;
 
-const MODEL_ID = 'onnx-community/SmolVLM-256M-Instruct';
+// Use the official Hugging Face TB repository, which hosts the ONNX weights
+// consumed by transformers.js. The previously used `onnx-community/...` repo
+// does not exist, so Hugging Face returned HTTP 401 ("Unauthorized access to
+// file") when fetching its config files.
+const MODEL_ID = 'HuggingFaceTB/SmolVLM-256M-Instruct';
 
 // A single vision-language model replaces the previous two-model pipeline.
 // SmolVLM-256M-Instruct accepts an image + text prompt directly and produces
